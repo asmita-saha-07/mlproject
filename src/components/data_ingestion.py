@@ -1,0 +1,59 @@
+import sys
+import os
+from logger import logging
+from exception import CustomException
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from dataclasses import dataclass
+
+from data_transformation import DataTransformation
+from data_transformation import DataTransformationConfig
+
+from model_train import ModelTrain
+from model_train import ModelTrainConfig
+
+@dataclass
+class DataIngestionConfig:
+    train_data_path: str= os.path.join("artifacts",'train.csv')
+    test_data_path: str= os.path.join("artifacts",'test.csv')
+    raw_data_path: str= os.path.join("artifacts",'data.csv')
+
+class DataIngestion:
+    def __init__(self):
+        self.ingestionconfig=DataIngestionConfig()
+
+    def initiate_data_ingestion(self):
+        logging.info("Entered data ingestion function")
+        try:
+            df=pd.read_csv("notebook/stud.csv")
+            logging.info("Read data from CSV file")
+
+            os.makedirs(os.path.dirname(self.ingestionconfig.train_data_path),exist_ok=True)
+            df.to_csv(self.ingestionconfig.raw_data_path,index=False, header=True)
+
+            train,test=train_test_split(df,test_size=0.2,random_state=42)
+            logging.info("Train test split completed")
+
+            train.to_csv(self.ingestionconfig.train_data_path, index=False, header=True)
+            test.to_csv(self.ingestionconfig.test_data_path, index=False, header=True)
+
+            logging.info("Ingestion of data completed")
+
+            return (
+                self.ingestionconfig.train_data_path,
+                self.ingestionconfig.test_data_path
+            )
+
+        except Exception as e:
+            raise CustomException(e, sys)
+
+if __name__=='__main__':
+    obj=DataIngestion()
+    train,test=obj.initiate_data_ingestion()
+
+    data_transformation=DataTransformation()
+    train_df,test_df=data_transformation.initiate_data_transformation(train,test)
+
+    model=ModelTrain()
+    print(model.initiate_model_training(train_df,test_df))
