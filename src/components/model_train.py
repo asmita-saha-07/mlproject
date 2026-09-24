@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, GradientB
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import r2_score
 from src.utils import evaluate_models, save_object
@@ -28,9 +29,22 @@ class ModelTrain:
             'LinearRegression':LinearRegression(),
             'DecisionTreeRegressor':DecisionTreeRegressor(),
             'XGBRegressor':XGBRegressor(),
-            'KNeighborsRegressor':KNeighborsRegressor()
+            'KNeighborsRegressor':KNeighborsRegressor(),
+            'CatBoostRegressor':CatBoostRegressor(verbose=False)
         }
-        model_report:dict=evaluate_models(X_train,y_train,X_test,y_test,models)
+
+        params={
+           'RandomForestRegressor':{'n_estimators':[50,100]},
+           'AdaBoostRegressor':{'learning_rate':[0.1,0.5]},
+           'GradientBoostingRegressor':{'loss':['squared_error']},
+           'LinearRegression':{},
+           'DecisionTreeRegressor':{'criterion':['squared_error']},
+           'XGBRegressor':{'n_estimators':[50,100]},
+           'KNeighborsRegressor':{'n_neighbors':[5,10]},
+           'CatBoostRegressor':{'learning_rate':[0.1,0.5]}
+        }
+
+        model_report:dict=evaluate_models(X_train,y_train,X_test,y_test,models,params)
         best_model_score=max(model_report.values())
         best_model_name=list(model_report.keys())[list(model_report.values()).index(best_model_score)]
         best_model=models[best_model_name]
